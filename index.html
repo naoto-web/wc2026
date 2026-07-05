@@ -821,8 +821,8 @@ function renderMemberView(data) {
 function renderHighlightView(data) {
   var allMatches = [];
   var roundOrder = [
-    {key:'r32', label:'R32'},{key:'r16', label:'R16'},
-    {key:'qf', label:'QF'},{key:'sf', label:'SF'},
+    {key:'r32', label:'B32'},{key:'r16', label:'B16'},
+    {key:'qf', label:'B8'},{key:'sf', label:'B4'},
     {key:'third', label:'3位決定戦'},{key:'final', label:'決勝'}
   ];
   roundOrder.forEach(function(r) {
@@ -938,7 +938,7 @@ function showTeamPopup(name) {
   var matchHistory = [];
   var nextMatch = null;
 
-  var roundKeys = [{key:'r32',label:'R32'},{key:'r16',label:'R16'},{key:'qf',label:'QF'},{key:'sf',label:'SF'},{key:'final',label:'決勝'}];
+  var roundKeys = [{key:'r32',label:'B32'},{key:'r16',label:'B16'},{key:'qf',label:'B8'},{key:'sf',label:'B4'},{key:'final',label:'決勝'}];
   roundKeys.forEach(function(r) {
     var arr = r.key==='final'?(gData.final?[gData.final]:[]):(gData[r.key]||[]);
     arr.forEach(function(m) {
