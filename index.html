@@ -635,10 +635,10 @@ function renderBracket(data) {
 // メンバービュー
 // ────────────────────────────────────────────────
 function renderMemberView(data) {
-  // チームの現在ラウンドと勝利数を計算
+  // チームの進出度（ベスト表記）と勝利数を計算
   function getTeamRound(name) {
     var alive = true;
-    var currentRound = 'R32';
+    var currentRound = 'B32';
     var stars = 0;
 
     var r32 = data.r32||[];
@@ -647,10 +647,10 @@ function renderMemberView(data) {
       if((m.team1.name===name||m.team2.name===name)&&m.winner!=null) {
         var iswinner = (m.team1.name===name&&m.winner===1)||(m.team2.name===name&&m.winner===2);
         if(!iswinner){alive=false;break;}
-        stars=1; currentRound='R16';
+        stars=1; currentRound='B16';
       }
     }
-    if(!alive) return {alive:false,round:'R32',stars:0};
+    if(!alive) return {alive:false,round:'B32',stars:0};
 
     var r16 = data.r16||[];
     for(var i=0;i<r16.length;i++) {
@@ -658,10 +658,10 @@ function renderMemberView(data) {
       if((m.team1.name===name||m.team2.name===name)&&m.winner!=null) {
         var iswinner = (m.team1.name===name&&m.winner===1)||(m.team2.name===name&&m.winner===2);
         if(!iswinner){alive=false;break;}
-        stars=2; currentRound='QF';
+        stars=2; currentRound='B8';
       }
     }
-    if(!alive) return {alive:false,round:'R16',stars:1};
+    if(!alive) return {alive:false,round:'B16',stars:1};
 
     var qf = data.qf||[];
     for(var i=0;i<qf.length;i++) {
@@ -669,10 +669,10 @@ function renderMemberView(data) {
       if((m.team1.name===name||m.team2.name===name)&&m.winner!=null) {
         var iswinner = (m.team1.name===name&&m.winner===1)||(m.team2.name===name&&m.winner===2);
         if(!iswinner){alive=false;break;}
-        stars=3; currentRound='SF';
+        stars=3; currentRound='B4';
       }
     }
-    if(!alive) return {alive:false,round:'QF',stars:2};
+    if(!alive) return {alive:false,round:'B8',stars:2};
 
     var sf = data.sf||[];
     for(var i=0;i<sf.length;i++) {
@@ -683,13 +683,13 @@ function renderMemberView(data) {
         stars=4; currentRound='決勝';
       }
     }
-    if(!alive) return {alive:false,round:'SF',stars:3};
+    if(!alive) return {alive:false,round:'B4',stars:3};
 
     var fin = data.final;
     if(fin&&(fin.team1.name===name||fin.team2.name===name)&&fin.winner!=null) {
       var iswinner=(fin.team1.name===name&&fin.winner===1)||(fin.team2.name===name&&fin.winner===2);
       if(iswinner){stars=5;currentRound='優勝';}
-      else{alive=false;}
+      else{alive=false;currentRound='準優勝';}
       return {alive:iswinner,round:currentRound,stars:stars};
     }
 
@@ -779,7 +779,7 @@ function renderMemberView(data) {
     var badge = '';
     if(alive===0 && total>0) badge = '<span class="member-badge" style="color:#64748b">全滅 💀</span>';
     else if(alive===1) badge = '<span class="member-badge" style="color:'+color+'">LAST ONE 🔥</span>';
-    var hasFinalist = teamInfos.some(function(ti){ return ti.info.round==='決勝'||ti.info.round==='優勝'; });
+    var hasFinalist = teamInfos.some(function(ti){ return ti.info.round==='決勝'||ti.info.round==='優勝'||ti.info.round==='準優勝'; });
     if(hasFinalist) badge += ' <span class="member-badge" style="color:#f59e0b">🏆</span>';
 
     html += '<div class="member-card" style="border-color:'+color+'33">';
