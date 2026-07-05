@@ -581,7 +581,10 @@ function renderBracket(data) {
 
   // ─── 決勝（ボックスなし：トロフィーを線の上に浮かせる） ──────────
   var finY=sfLmid;
-  p.push('<text x="'+FC+'" y="'+(finY-10)+'" text-anchor="middle" font-size="14">🏆</text>');
+  // 優勝への縦線：決勝横線の中央からトロフィーへつなぐ。優勝決定後は優勝チームの色で光る
+  var champ=fin&&fin.winner!=null?(fin.winner===1?fin.team1:fin.team2):null;
+  p.push('<line x1="'+FC+'" y1="'+finY+'" x2="'+FC+'" y2="'+(finY-14)+'" stroke="'+(champ?lineColor(champ,true):'#334155')+'" stroke-width="'+(champ?2.5:1.2)+'"/>');
+  p.push('<text x="'+FC+'" y="'+(finY-18)+'" text-anchor="middle" font-size="14">🏆</text>');
   if(fin&&fin.score1!=null){
     var sc1=String(fin.score1),sc2=String(fin.score2);
     if(fin.pk1!=null){sc1+='('+fin.pk1+')';sc2+='('+fin.pk2+')';}
