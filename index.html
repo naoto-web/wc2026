@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>W杯2026 トーナメント</title>
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="W杯2026">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;color:#f1f5f9;font-size:4vw}
+#app{display:flex;flex-direction:column;height:100%;width:100%;position:relative}
+
+/* ヘッダー */
+#header{flex-shrink:0;background:#1e293b;border-bottom:1px solid #334155}
+#next-banner{padding:0.5rem 0.75rem;font-size:0.75rem;line-height:1.4;display:none}
+/* フォーカスボタン列 */
+#focus-row{display:none;padding:0.4rem 0.5rem;gap:0.2rem;flex-wrap:nowrap;background:#1e293b;border-bottom:1px solid #334155}
+#focus-row button{flex:1;padding:0.3rem 0;border-radius:20px;border:2px solid;background:transparent;font-size:0.6rem;font-weight:bold;cursor:pointer;transition:all .15s;color:#f1f5f9;white-space:nowrap}
+#focus-row button.active{color:#0f172a}
+#focus-row button#btn-all{border-color:#64748b;color:#94a3b8}
+
+/* タブコンテンツ */
+#content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.tab-pane{display:none;padding-bottom:5rem}
+.tab-pane.active{display:block}
+
+/* ブラケットタブ */
+#bracket-wrap{width:100%;overflow:hidden}
+#bracket-wrap svg{display:block;width:100%;height:auto}
+.refresh-controls{display:flex;justify-content:center;padding:0.5rem 0.75rem}
+.refresh-btn{background:#334155;border:none;color:#94a3b8;font-size:0.75rem;padding:0.375rem 0.75rem;border-radius:8px;cursor:pointer}
+.svg-live{animation:blink 1s infinite}
+
+/* メンバータブ */
+#member-list{padding:0.75rem}
+.member-card{background:#1e293b;border-radius:12px;padding:0.75rem;margin-bottom:0.75rem;border:1px solid #334155}
+.member-header{display:flex;align-items:center;gap:0.375rem;margin-bottom:0.5rem;flex-wrap:wrap}
+.member-name{font-size:1rem;font-weight:bold}
+.member-count{font-size:0.8125rem;font-weight:bold;margin-left:auto;white-space:nowrap}
+.member-count .count-label{font-size:0.5625rem;color:#94a3b8}
+.member-record{font-size:0.6875rem;color:#94a3b8;font-weight:bold;white-space:nowrap}
+.member-record .member-winrate{color:#f1f5f9}
+.member-note{font-size:0.625rem;color:#64748b;font-weight:bold;margin:0 0.125rem 0.5rem}
+.member-rank{font-size:0.6875rem;font-weight:bold;background:#334155;color:#cbd5e1;padding:0.125rem 0.4375rem;border-radius:10px;flex-shrink:0}
+.member-rank.top{background:#f59e0b;color:#0f172a}
+.member-bar-bg{height:6px;background:#334155;border-radius:3px;margin-bottom:0.625rem;overflow:hidden}
+.member-bar-fill{height:100%;border-radius:3px;transition:width .5s}
+.member-badge{font-size:0.6875rem;font-weight:bold;padding:0.125rem 0.5rem;border-radius:10px;background:#1e293b}
+.team-chips{display:flex;flex-wrap:wrap;gap:0.375rem}
+.team-chip{display:flex;align-items:center;gap:0.25rem;background:#0f172a;border-radius:8px;padding:0.3125rem 0.5rem;border:1px solid #334155;font-size:0.6875rem}
+.team-chip.eliminated{opacity:.4;text-decoration:line-through}
+.round-badge{font-size:0.5625rem;background:#334155;color:#94a3b8;padding:1px 5px;border-radius:4px;font-weight:bold}
+.stars{color:#f59e0b;font-size:0.625rem;letter-spacing:1px}
+
+/* ハイライトタブ */
+#highlight-list{padding:0.75rem}
+.hl-card{background:#1e293b;border-radius:12px;padding:0.75rem;margin-bottom:0.625rem;border:1px solid #334155}
+.hl-match-title{font-size:0.8125rem;font-weight:bold;margin-bottom:0.25rem;display:flex;align-items:center;gap:0.375rem}
+.hl-date{font-size:0.6875rem;color:#64748b;margin-bottom:0.625rem}
+.hl-btns{display:flex;gap:0.5rem}
+.hl-btn{flex:1;padding:0.5rem 0.25rem;border-radius:8px;border:none;font-size:0.75rem;font-weight:bold;cursor:pointer;transition:opacity .15s}
+.hl-btn:active{opacity:.7}
+.hl-btn-watch{background:#7c3aed;color:#fff}
+.hl-btn-score{background:#0f172a;color:#94a3b8;border:1px solid #334155}
+.hl-score-reveal{text-align:center;font-size:1.125rem;font-weight:bold;padding:0.375rem 0;display:none}
+.live-badge{background:#dc2626;color:#fff;font-size:0.5625rem;font-weight:bold;padding:2px 6px;border-radius:4px;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* 下部ナビ */
+#bottom-nav{position:fixed;bottom:0;left:0;width:100%;background:#1e293b;border-top:1px solid #334155;display:flex;z-index:100}
+.nav-btn{flex:1;padding:0.75rem 0.25rem 0.625rem;border:none;background:transparent;color:#64748b;font-size:0.625rem;font-weight:bold;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0.125rem;transition:color .15s}
+.nav-btn.active{color:#38bdf8}
+.nav-icon{font-size:1.25rem}
+
+/* ポップアップ */
+#popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:flex-end;justify-content:center}
+#popup-overlay.open{display:flex}
+#popup-box{background:#1e293b;border-radius:20px 20px 0 0;padding:1.25rem;width:100%;max-width:480px;max-height:70vh;overflow-y:auto}
+#popup-close{float:right;background:none;border:none;color:#64748b;font-size:1.25rem;cursor:pointer;line-height:1}
+#popup-content{margin-top:0.75rem}
+.popup-team-header{display:flex;align-items:center;gap:0.625rem;margin-bottom:0.75rem}
+.popup-flag{font-size:2rem}
+.popup-nation{font-size:1.25rem;font-weight:bold}
+.popup-member{font-size:0.8125rem;margin-top:0.125rem}
+.popup-section{margin-bottom:0.875rem}
+.popup-label{font-size:0.6875rem;color:#64748b;font-weight:bold;margin-bottom:0.375rem}
+.popup-match-row{font-size:0.75rem;padding:0.3125rem 0;border-bottom:1px solid #334155;display:flex;align-items:center;gap:0.375rem}
+
+/* 個人成績タブ */
+.scorers-toggle{display:flex;gap:0.5rem;padding:0.75rem}
+.scorers-toggle-btn{flex:1;padding:0.5rem;border-radius:8px;border:none;background:#1e293b;color:#94a3b8;font-weight:bold;cursor:pointer;font-size:0.875rem;transition:all .15s}
+.scorers-toggle-btn.active{background:#7c3aed;color:#fff}
+.scorers-refresh{display:flex;justify-content:center;padding:0 0.75rem 0.5rem}
+.scorers-refresh-btn{background:#334155;border:none;color:#94a3b8;font-size:0.75rem;padding:0.375rem 0.75rem;border-radius:8px;cursor:pointer}
+#scorers-list{padding:0 0.75rem}
+.scorer-row{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;border-radius:10px;margin-bottom:0.5rem}
+.scorer-rank{font-size:1.1rem;font-weight:bold;min-width:2.5rem;text-align:center;flex-shrink:0}
+.scorer-info{flex:1;display:flex;flex-direction:column;gap:0.2rem;min-width:0}
+.scorer-name{font-weight:bold;color:#f1f5f9;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scorer-team{font-size:0.75rem;color:#94a3b8}
+.scorer-count{font-size:1.75rem;font-weight:bold;min-width:2rem;text-align:right;flex-shrink:0}
+
+/* ローディング */
+#loading{text-align:center;padding:3.75rem 1.25rem;color:#64748b;font-size:0.875rem}
+
+/* 紙吹雪 */
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:300;display:none}
+.confetti-piece{position:absolute;width:8px;height:8px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+/* データステータス（PWA版：前回データ表示中・オフライン表示） */
+#data-status{text-align:center;font-size:0.7rem;color:#64748b;padding:0.15rem 0.5rem}
+</style>
+
+</head>
+<body>
+<div id="app">
+  <div id="header">
+<div id="focus-row"></div>
+<div id="data-status" style="display:none"></div>
+  </div>
+  <div id="content">
+    <div id="tab-highlight" class="tab-pane active">
+      <div class="refresh-controls" style="display:none">
+        <button class="refresh-btn" onclick="doRefresh()">🔄 更新</button>
+      </div>
+      <div id="highlight-list"></div>
+    </div>
+    <div id="tab-bracket" class="tab-pane">
+      <div id="loading">⏳ データ読み込み中…</div>
+      <div class="refresh-controls" style="display:none">
+        <button class="refresh-btn" onclick="doRefresh()">🔄 更新</button>
+      </div>
+      <div id="bracket-wrap"></div>
+    </div>
+    <div id="tab-member" class="tab-pane">
+      <div class="refresh-controls" style="display:none">
+        <button class="refresh-btn" onclick="doRefresh()">🔄 更新</button>
+      </div>
+      <div id="member-list"></div>
+    </div>
+    <div id="tab-scorers" class="tab-pane">
+      <div class="scorers-toggle">
+        <button class="scorers-toggle-btn active" onclick="setScorersMode('goals',this)">⚽ ゴール</button>
+        <button class="scorers-toggle-btn" onclick="setScorersMode('assists',this)">🎯 アシスト</button>
+      </div>
+      <div class="scorers-refresh">
+        <button class="scorers-refresh-btn" onclick="refreshScorers()">🔄 更新</button>
+      </div>
+      <div id="scorers-list"></div>
+    </div>
+  </div>
+  <nav id="bottom-nav">
+    <button class="nav-btn active" onclick="switchTab('highlight',this)"><span class="nav-icon">🎬</span>動画</button>
+    <button class="nav-btn" onclick="switchTab('bracket',this)"><span class="nav-icon">🏆</span>試合</button>
+    <button class="nav-btn" onclick="switchTab('member',this)"><span class="nav-icon">👥</span>メンバー</button>
+    <button class="nav-btn" onclick="switchTab('scorers',this)"><span class="nav-icon">🏅</span>個人</button>
+  </nav>
+</div>
+
+<div id="popup-overlay" onclick="closePopup()">
+  <div id="popup-box" onclick="event.stopPropagation()">
+    <button id="popup-close" onclick="closePopup()">✕</button>
+    <div id="popup-content"></div>
+  </div>
+</div>
+
+<div id="confetti"></div>
+
+<script>
+// ────────────────────────────────────────────────
+// API呼び出し共通ヘルパー（1ソース2環境）
+//   GAS版（身内URL直アクセス）: google.script.run を使う
+//   PWA版（GitHub Pages）     : fetch → GASのJSON API を使う
+// GAS_API_URL はビルド.ps1 が実URLに置換する。空のままならGAS版として動く。
+// ────────────────────────────────────────────────
+var GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz3WDx8QQFCzIXEAHNQMzhKjFN-17HF0QuDedqI_XcP492Sxs6LGVIVFBZlWCgeJsb9lA/exec';
+
+function apiCall(action, params, onSuccess, onFailure) {
+  if (!GAS_API_URL) {
+    var runner = google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onFailure);
+    if (action === 'info') runner.getTournamentInfo();
+    else if (action === 'refresh') runner.refreshTournamentData();
+    else if (action === 'scorers') runner.getScorers();
+    else if (action === 'highlight') runner.getHighlight(params.key, params.team1, params.team2);
+    else onFailure(new Error('不明なaction: ' + action));
+    return;
+  }
+  var qs = 'action=' + encodeURIComponent(action);
+  if (params) {
+    for (var k in params) qs += '&' + k + '=' + encodeURIComponent(params[k]);
+  }
+  fetch(GAS_API_URL + '?' + qs)
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(d) {
+      if (d && d.__error) throw new Error(d.__error);
+      onSuccess(d);
+    })
+    .catch(function(e) { onFailure(e); });
+}
+
+// ────────────────────────────────────────────────
+// 前回データのキャッシュ（localStorage）
+// 起動時に即表示し、裏で最新に差し替えるために使う
+// ────────────────────────────────────────────────
+function saveCache(name, data) {
+  try {
+    localStorage.setItem('wc2026_cache_' + name, JSON.stringify({ t: Date.now(), d: data }));
+  } catch (e) {}
+}
+
+function loadCache(name) {
+  try {
+    var raw = localStorage.getItem('wc2026_cache_' + name);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+function fmtCacheTime(t) {
+  var d = new Date(t);
+  return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2);
+}
+
+// ヘッダー下の小さいステータス表示（オフライン時など）。空文字で非表示
+function setDataStatus(text) {
+  var el = document.getElementById('data-status');
+  if (!el) return;
+  el.textContent = text || '';
+  el.style.display = text ? 'block' : 'none';
+}
+</script>
+
+<script>
+// ────────────────────────────────────────────────
+// 定数
+// ────────────────────────────────────────────────
+var MEMBERS = ['しょーじ','あさひ','ひろかず','たくと','なおと','キャリー'];
+var MEMBER_COLORS = {
+  'あさひ':'#3b82f6','しょーじ':'#ef4444','たくと':'#f59e0b',
+  'なおと':'#22c55e','ひろかず':'#a855f7','キャリー':'#f97316'
+};
+var CC = {
+  'ドイツ':'de','パラグアイ':'py','フランス':'fr','スウェーデン':'se',
+  '南アフリカ':'za','カナダ':'ca','オランダ':'nl','モロッコ':'ma',
+  'ポルトガル':'pt','クロアチア':'hr','スペイン':'es','オーストリア':'at',
+  'アメリカ':'us','ボスニア・ヘルツェゴビナ':'ba','ベルギー':'be','セネガル':'sn',
+  'ブラジル':'br','日本':'jp','コートジボワール':'ci','ノルウェー':'no',
+  'メキシコ':'mx','エクアドル':'ec','イングランド':'gb','DRコンゴ':'cd',
+  'アルゼンチン':'ar','カーボベルデ':'cv','オーストラリア':'au','エジプト':'eg',
+  'スイス':'ch','アルジェリア':'dz','コロンビア':'co','ガーナ':'gh',
+};
+var ROUND_LABEL = {R32:'R32',R16:'R16',QF:'QF',SF:'SF','決勝':'FINAL','3位決定戦':'3rd'};
+
+// ────────────────────────────────────────────────
+// グローバル状態
+// ────────────────────────────────────────────────
+var gData = null;
+var focusMember = null;
+var lastSeen = JSON.parse(localStorage.getItem('wc_lastSeen') || '{}');
+
+// ────────────────────────────────────────────────
+// ユーティリティ
+// ────────────────────────────────────────────────
+function flagUrl(name) {
+  var c = CC[name];
+  return c ? 'https://flagcdn.com/20x15/'+c+'.png' : null;
+}
+function mc(member) { return MEMBER_COLORS[member] || '#64748b'; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+
+<script>
+// ────────────────────────────────────────────────
+// SVGブラケット生成
+// ────────────────────────────────────────────────
+function renderBracket(data) {
+  // レイアウト定数
+  var CW=90, CH=34, YO=30, MH=109;
+  var T1O=30, T2O=79;           // チームY中心オフセット（試合スロット内）
+  var MMID=(T1O+T2O)/2;         // = 54.5、試合中点オフセット
+  var TH=8*MH;                   // = 872
+  var H=YO+TH+120;               // = 1022
+
+  // X座標
+  var L0=0;           // R32カード左端
+  var W=402;
+  var FC=W/2;         // 決勝中心X = 201
+  var R0=W-CW;        // 右R32カード左端 = 312
+  var Lv4=FC-12;      // 左SFバー（中心から12px）= 189
+  var Rv4=FC+12;      // 右SFバー（中心から12px）= 213
+  var seg=(Lv4-(L0+CW))/4; // 均等区間幅 = (189-90)/4 = 24.75px
+  var Lv1=L0+CW+seg;       // = 114.75
+  var Lv2=L0+CW+seg*2;     // = 139.5
+  var Lv3=L0+CW+seg*3;     // = 164.25
+  var Rv1=R0-seg;           // = 287.25
+  var Rv2=R0-seg*2;         // = 262.5
+  var Rv3=R0-seg*3;         // = 237.75
+
+  var r32L=(data.r32||[]).slice(0,8);
+  var r32R=(data.r32||[]).slice(8,16);
+  var r16L=(data.r16||[]).slice(0,4);
+  var r16R=(data.r16||[]).slice(4,8);
+  var qfL=(data.qf||[]).slice(0,2);
+  var qfR=(data.qf||[]).slice(2,4);
+  var sfL=data.sf?data.sf[0]:null;
+  var sfR=data.sf?data.sf[1]:null;
+  var fin=data.final||null;
+  var third=data.third||null;
+
+  // 試合iの中心Y（0始まり）
+  function matchY(i) { return YO+i*MH+MMID; }
+
+  // カラーヘルパー
+  function lineColor(team, isWinner) {
+    if(!isWinner) return '#334155';
+    if(team&&team.name&&eliminated[team.name]) return '#475569';
+    var m=team&&team.member;
+    if(!m) return '#64748b';
+    if(focusMember&&m!==focusMember) return '#334155';
+    return mc(m);
+  }
+  function cardOpacity(team) {
+    if(!focusMember) return 1;
+    if(!team||!team.member) return 0.3;
+    return team.member===focusMember?1:0.3;
+  }
+  function isLive(m) { return !!m && (m.status==='IN_PLAY'||m.status==='PAUSED'); }
+  // 試合中バッジ（日時と同じ位置に点滅表示）
+  function liveBadge(x,y,anchor) {
+    p.push('<text class="svg-live" x="'+x+'" y="'+y+'" text-anchor="'+anchor+'" fill="#ef4444" font-size="9.5" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">● LIVE</text>');
+  }
+
+  var p=[];
+  p.push('<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto">');
+  p.push('<rect width="'+W+'" height="'+H+'" fill="#0f172a"/>');
+
+  // R16以降で敗退したチーム名の集合（カードはR32列にしかないため、後のラウンドの敗北もここで反映する）
+  var eliminated={};
+  [data.r16,data.qf,data.sf,fin?[fin]:[]].forEach(function(rd){
+    (rd||[]).forEach(function(m){
+      if(!m||m.winner==null) return;
+      var lt=m.winner===1?m.team2:m.team1;
+      if(lt&&lt.name) eliminated[lt.name]=true;
+    });
+  });
+
+  // 得点の文字色（勝者でも後のラウンドで敗退していればグレー）
+  function scoreColor(m, side) {
+    if(m.winner!==side) return '#94a3b8';
+    var t=side===1?m.team1:m.team2;
+    return (t&&t.name&&eliminated[t.name])?'#94a3b8':'#86efac';
+  }
+
+  // チームカード描画
+  function drawCard(x,y,team,isLoser) {
+    if(!isLoser&&team&&eliminated[team.name]) isLoser=true;
+    var name=team?team.name:'';
+    var member=team?team.member:'';
+    var op=team?cardOpacity(team):0.5;
+    var bc=isLoser?'#475569':((member&&(!focusMember||member===focusMember))?mc(member):'#334155');
+    var fill=isLoser?'#1a2332':'#1e293b';
+    var textc=isLoser?'#475569':'#e2e8f0';
+    var memc=isLoser?'#475569':bc;
+    p.push('<g opacity="'+op+'" onclick="showTeamPopup(\''+esc(name)+'\')" style="cursor:pointer">');
+    p.push('<rect x="'+x+'" y="'+y+'" width="'+CW+'" height="'+CH+'" rx="4" fill="'+fill+'" stroke="'+bc+'" stroke-width="'+(member?1.5:1)+'"/>');
+    if(member) p.push('<rect x="'+x+'" y="'+y+'" width="3" height="'+CH+'" rx="2" fill="'+bc+'"/>');
+    if(name){
+      var fx=flagUrl(name);
+      var tx=member?x+7:x+6;
+      if(fx){p.push('<image href="'+fx+'" x="'+tx+'" y="'+(y+CH/2-7.5)+'" width="17" height="13" preserveAspectRatio="xMidYMid meet"/>');tx+=20;}
+      if(name.length>=10){
+        var half=Math.ceil(name.length/2);
+        p.push('<text x="'+tx+'" y="'+(y+CH/2-9)+'" fill="'+textc+'" font-size="8" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">'+esc(name.slice(0,half))+'</text>');
+        p.push('<text x="'+tx+'" y="'+(y+CH/2+1)+'" fill="'+textc+'" font-size="8" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">'+esc(name.slice(half))+'</text>');
+        if(member) p.push('<text x="'+tx+'" y="'+(y+CH/2+12)+'" fill="'+memc+'" font-size="7" font-family="-apple-system,sans-serif">'+esc(member)+'</text>');
+      } else {
+        var fs=name.length<=6?9.5:name.length<=8?7.5:7;
+        p.push('<text x="'+tx+'" y="'+(y+CH/2-3)+'" fill="'+textc+'" font-size="'+fs+'" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">'+esc(name)+'</text>');
+        if(member) p.push('<text x="'+tx+'" y="'+(y+CH/2+9)+'" fill="'+memc+'" font-size="7.5" font-family="-apple-system,sans-serif">'+esc(member)+'</text>');
+      }
+    } else {
+      p.push('<text x="'+(x+CW/2)+'" y="'+(y+CH/2)+'" fill="#334155" font-size="8" text-anchor="middle" dominant-baseline="middle">TBD</text>');
+    }
+    p.push('</g>');
+  }
+
+  // ─── R32：カード＋マッチバー(Lv1/Rv1)＋R32出力線(Lv1→Lv2) ───────
+  for(var i=0;i<8;i++) {
+    var mL=r32L[i]||null, mR=r32R[i]||null;
+    var t1Y=YO+i*MH+T1O, t2Y=YO+i*MH+T2O, mid=matchY(i);
+
+    // 左カード
+    drawCard(L0,t1Y-CH/2,mL?mL.team1:null,!!(mL&&mL.winner===2));
+    drawCard(L0,t2Y-CH/2,mL?mL.team2:null,!!(mL&&mL.winner===1));
+    var c1L=(mL&&mL.winner===1)?lineColor(mL.team1,true):'#334155';
+    var c2L=(mL&&mL.winner===2)?lineColor(mL.team2,true):'#334155';
+    p.push('<line x1="'+(L0+CW)+'" y1="'+t1Y+'" x2="'+Lv1+'" y2="'+t1Y+'" stroke="'+c1L+'" stroke-width="'+(mL&&mL.winner===1?2.5:1.2)+'"/>');
+    p.push('<line x1="'+(L0+CW)+'" y1="'+t2Y+'" x2="'+Lv1+'" y2="'+t2Y+'" stroke="'+c2L+'" stroke-width="'+(mL&&mL.winner===2?2.5:1.2)+'"/>');
+    var winL=mL&&mL.winner!=null?(mL.winner===1?mL.team1:mL.team2):null;
+    p.push('<line x1="'+Lv1+'" y1="'+t1Y+'" x2="'+Lv1+'" y2="'+mid+'" stroke="'+(mL&&mL.winner===1?lineColor(mL.team1,true):'#475569')+'" stroke-width="'+(mL&&mL.winner===1?2.5:1.5)+'"/>');
+    p.push('<line x1="'+Lv1+'" y1="'+mid+'" x2="'+Lv1+'" y2="'+t2Y+'" stroke="'+(mL&&mL.winner===2?lineColor(mL.team2,true):'#475569')+'" stroke-width="'+(mL&&mL.winner===2?2.5:1.5)+'"/>');
+    p.push('<line x1="'+Lv1+'" y1="'+mid+'" x2="'+Lv2+'" y2="'+mid+'" stroke="'+(winL?lineColor(winL,true):'#334155')+'" stroke-width="'+(winL?2.5:1.2)+'"/>');
+    if(mL&&mL.score1!=null){
+      var sc1=String(mL.score1),sc2=String(mL.score2);
+      if(mL.pk1!=null){sc1+='('+mL.pk1+')';sc2+='('+mL.pk2+')';}
+      var fc1=scoreColor(mL,1),fc2=scoreColor(mL,2);
+      var sxL=(Lv1+Lv2)/2;
+      p.push('<text x="'+sxL+'" y="'+(mid-8)+'" text-anchor="middle" fill="'+fc1+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc1)+'</text>');
+      p.push('<text x="'+sxL+'" y="'+(mid+8)+'" text-anchor="middle" fill="'+fc2+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc2)+'</text>');
+    }
+    if(mL&&mL.date&&mL.score1==null&&!isLive(mL)){
+      p.push('<text x="'+(Lv1-4)+'" y="'+mid+'" text-anchor="end" fill="#64748b" font-size="10.5" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">'+esc(String(mL.date))+'</text>');
+    }
+    if(isLive(mL)) liveBadge(Lv1-4, mid, 'end');
+
+    // 右カード
+    drawCard(R0,t1Y-CH/2,mR?mR.team1:null,!!(mR&&mR.winner===2));
+    drawCard(R0,t2Y-CH/2,mR?mR.team2:null,!!(mR&&mR.winner===1));
+    var c1R=(mR&&mR.winner===1)?lineColor(mR.team1,true):'#334155';
+    var c2R=(mR&&mR.winner===2)?lineColor(mR.team2,true):'#334155';
+    p.push('<line x1="'+R0+'" y1="'+t1Y+'" x2="'+Rv1+'" y2="'+t1Y+'" stroke="'+c1R+'" stroke-width="'+(mR&&mR.winner===1?2.5:1.2)+'"/>');
+    p.push('<line x1="'+R0+'" y1="'+t2Y+'" x2="'+Rv1+'" y2="'+t2Y+'" stroke="'+c2R+'" stroke-width="'+(mR&&mR.winner===2?2.5:1.2)+'"/>');
+    var winR=mR&&mR.winner!=null?(mR.winner===1?mR.team1:mR.team2):null;
+    p.push('<line x1="'+Rv1+'" y1="'+t1Y+'" x2="'+Rv1+'" y2="'+mid+'" stroke="'+(mR&&mR.winner===1?lineColor(mR.team1,true):'#475569')+'" stroke-width="'+(mR&&mR.winner===1?2.5:1.5)+'"/>');
+    p.push('<line x1="'+Rv1+'" y1="'+mid+'" x2="'+Rv1+'" y2="'+t2Y+'" stroke="'+(mR&&mR.winner===2?lineColor(mR.team2,true):'#475569')+'" stroke-width="'+(mR&&mR.winner===2?2.5:1.5)+'"/>');
+    p.push('<line x1="'+Rv1+'" y1="'+mid+'" x2="'+Rv2+'" y2="'+mid+'" stroke="'+(winR?lineColor(winR,true):'#334155')+'" stroke-width="'+(winR?2.5:1.2)+'"/>');
+    if(mR&&mR.score1!=null){
+      var sc1=String(mR.score1),sc2=String(mR.score2);
+      if(mR.pk1!=null){sc1+='('+mR.pk1+')';sc2+='('+mR.pk2+')';}
+      var fc1=scoreColor(mR,1),fc2=scoreColor(mR,2);
+      var sxR=(Rv2+Rv1)/2;
+      p.push('<text x="'+sxR+'" y="'+(mid-8)+'" text-anchor="middle" fill="'+fc1+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc1)+'</text>');
+      p.push('<text x="'+sxR+'" y="'+(mid+8)+'" text-anchor="middle" fill="'+fc2+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc2)+'</text>');
+    }
+    if(mR&&mR.date&&mR.score1==null&&!isLive(mR)){
+      p.push('<text x="'+(Rv1+4)+'" y="'+mid+'" text-anchor="start" fill="#64748b" font-size="10.5" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">'+esc(String(mR.date))+'</text>');
+    }
+    if(isLive(mR)) liveBadge(Rv1+4, mid, 'start');
+  }
+
+  // ─── R16：マージバー(Lv2/Rv2)＋R16出力線(Lv2→Lv3) ─────────────
+  for(var k=0;k<4;k++) {
+    var midA=matchY(k*2), midB=matchY(k*2+1);
+    var r16mid=(midA+midB)/2;
+
+    // 左R16バー
+    var r16m=r16L[k]||null;
+    var winR16L=r16m&&r16m.winner!=null?(r16m.winner===1?r16m.team1:r16m.team2):null;
+    p.push('<line x1="'+Lv2+'" y1="'+midA+'" x2="'+Lv2+'" y2="'+r16mid+'" stroke="'+(r16m&&r16m.winner===1?lineColor(r16m.team1,true):'#475569')+'" stroke-width="'+(r16m&&r16m.winner===1?2.5:1.5)+'"/>');
+    p.push('<line x1="'+Lv2+'" y1="'+r16mid+'" x2="'+Lv2+'" y2="'+midB+'" stroke="'+(r16m&&r16m.winner===2?lineColor(r16m.team2,true):'#475569')+'" stroke-width="'+(r16m&&r16m.winner===2?2.5:1.5)+'"/>');
+    if(r16m&&r16m.score1!=null){
+      var sc1=String(r16m.score1),sc2=String(r16m.score2);
+      if(r16m.pk1!=null){sc1+='('+r16m.pk1+')';sc2+='('+r16m.pk2+')';}
+      var fc1=scoreColor(r16m,1),fc2=scoreColor(r16m,2);
+      var sxL16=(Lv2+Lv3)/2;
+      p.push('<text x="'+sxL16+'" y="'+(r16mid-8)+'" text-anchor="middle" fill="'+fc1+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc1)+'</text>');
+      p.push('<text x="'+sxL16+'" y="'+(r16mid+8)+'" text-anchor="middle" fill="'+fc2+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc2)+'</text>');
+    }
+    p.push('<line x1="'+Lv2+'" y1="'+r16mid+'" x2="'+Lv3+'" y2="'+r16mid+'" stroke="'+(winR16L?lineColor(winR16L,true):'#334155')+'" stroke-width="'+(winR16L?2.5:1.2)+'"/>');
+    if(r16m&&r16m.date&&r16m.score1==null&&!isLive(r16m)){
+      p.push('<text x="'+(Lv2-4)+'" y="'+r16mid+'" text-anchor="end" fill="#64748b" font-size="10.5" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">'+esc(String(r16m.date))+'</text>');
+    }
+    if(isLive(r16m)) liveBadge(Lv2-4, r16mid, 'end');
+
+    // 右R16バー
+    var r16mR=r16R[k]||null;
+    var winR16R=r16mR&&r16mR.winner!=null?(r16mR.winner===1?r16mR.team1:r16mR.team2):null;
+    p.push('<line x1="'+Rv2+'" y1="'+midA+'" x2="'+Rv2+'" y2="'+r16mid+'" stroke="'+(r16mR&&r16mR.winner===1?lineColor(r16mR.team1,true):'#475569')+'" stroke-width="'+(r16mR&&r16mR.winner===1?2.5:1.5)+'"/>');
+    p.push('<line x1="'+Rv2+'" y1="'+r16mid+'" x2="'+Rv2+'" y2="'+midB+'" stroke="'+(r16mR&&r16mR.winner===2?lineColor(r16mR.team2,true):'#475569')+'" stroke-width="'+(r16mR&&r16mR.winner===2?2.5:1.5)+'"/>');
+    if(r16mR&&r16mR.score1!=null){
+      var sc1=String(r16mR.score1),sc2=String(r16mR.score2);
+      if(r16mR.pk1!=null){sc1+='('+r16mR.pk1+')';sc2+='('+r16mR.pk2+')';}
+      var fc1=scoreColor(r16mR,1),fc2=scoreColor(r16mR,2);
+      var sxR16=(Rv3+Rv2)/2;
+      p.push('<text x="'+sxR16+'" y="'+(r16mid-8)+'" text-anchor="middle" fill="'+fc1+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc1)+'</text>');
+      p.push('<text x="'+sxR16+'" y="'+(r16mid+8)+'" text-anchor="middle" fill="'+fc2+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc2)+'</text>');
+    }
+    p.push('<line x1="'+Rv3+'" y1="'+r16mid+'" x2="'+Rv2+'" y2="'+r16mid+'" stroke="'+(winR16R?lineColor(winR16R,true):'#334155')+'" stroke-width="'+(winR16R?2.5:1.2)+'"/>');
+    if(r16mR&&r16mR.date&&r16mR.score1==null&&!isLive(r16mR)){
+      p.push('<text x="'+(Rv2+4)+'" y="'+r16mid+'" text-anchor="start" fill="#64748b" font-size="10.5" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">'+esc(String(r16mR.date))+'</text>');
+    }
+    if(isLive(r16mR)) liveBadge(Rv2+4, r16mid, 'start');
+  }
+
+  // ─── QF：マージバー(Lv3/Rv3)＋QF出力線(Lv3→Lv4) ──────────────
+  for(var q=0;q<2;q++) {
+    var rA=(matchY(q*4)+matchY(q*4+1))/2;
+    var rB=(matchY(q*4+2)+matchY(q*4+3))/2;
+    var qfmid=(rA+rB)/2;
+
+    // 左QFバー
+    var qfm=qfL[q]||null;
+    var winQFL=qfm&&qfm.winner!=null?(qfm.winner===1?qfm.team1:qfm.team2):null;
+    p.push('<line x1="'+Lv3+'" y1="'+rA+'" x2="'+Lv3+'" y2="'+qfmid+'" stroke="'+(qfm&&qfm.winner===1?lineColor(qfm.team1,true):'#475569')+'" stroke-width="'+(qfm&&qfm.winner===1?2.5:1.5)+'"/>');
+    p.push('<line x1="'+Lv3+'" y1="'+qfmid+'" x2="'+Lv3+'" y2="'+rB+'" stroke="'+(qfm&&qfm.winner===2?lineColor(qfm.team2,true):'#475569')+'" stroke-width="'+(qfm&&qfm.winner===2?2.5:1.5)+'"/>');
+    if(qfm&&qfm.score1!=null){
+      var sc1=String(qfm.score1),sc2=String(qfm.score2);
+      if(qfm.pk1!=null){sc1+='('+qfm.pk1+')';sc2+='('+qfm.pk2+')';}
+      var fc1=scoreColor(qfm,1),fc2=scoreColor(qfm,2);
+      var sxLQF=(Lv3+Lv4)/2;
+      p.push('<text x="'+sxLQF+'" y="'+(qfmid-8)+'" text-anchor="middle" fill="'+fc1+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc1)+'</text>');
+      p.push('<text x="'+sxLQF+'" y="'+(qfmid+8)+'" text-anchor="middle" fill="'+fc2+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc2)+'</text>');
+    }
+    p.push('<line x1="'+Lv3+'" y1="'+qfmid+'" x2="'+Lv4+'" y2="'+qfmid+'" stroke="'+(winQFL?lineColor(winQFL,true):'#334155')+'" stroke-width="'+(winQFL?2.5:1.2)+'"/>');
+    if(qfm&&qfm.date&&qfm.score1==null&&!isLive(qfm)){
+      p.push('<text x="'+(Lv3-4)+'" y="'+qfmid+'" text-anchor="end" fill="#64748b" font-size="10.5" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">'+esc(String(qfm.date))+'</text>');
+    }
+    if(isLive(qfm)) liveBadge(Lv3-4, qfmid, 'end');
+
+    // 右QFバー
+    var qfmR=qfR[q]||null;
+    var winQFR=qfmR&&qfmR.winner!=null?(qfmR.winner===1?qfmR.team1:qfmR.team2):null;
+    p.push('<line x1="'+Rv3+'" y1="'+rA+'" x2="'+Rv3+'" y2="'+qfmid+'" stroke="'+(qfmR&&qfmR.winner===1?lineColor(qfmR.team1,true):'#475569')+'" stroke-width="'+(qfmR&&qfmR.winner===1?2.5:1.5)+'"/>');
+    p.push('<line x1="'+Rv3+'" y1="'+qfmid+'" x2="'+Rv3+'" y2="'+rB+'" stroke="'+(qfmR&&qfmR.winner===2?lineColor(qfmR.team2,true):'#475569')+'" stroke-width="'+(qfmR&&qfmR.winner===2?2.5:1.5)+'"/>');
+    if(qfmR&&qfmR.score1!=null){
+      var sc1=String(qfmR.score1),sc2=String(qfmR.score2);
+      if(qfmR.pk1!=null){sc1+='('+qfmR.pk1+')';sc2+='('+qfmR.pk2+')';}
+      var fc1=scoreColor(qfmR,1),fc2=scoreColor(qfmR,2);
+      var sxRQF=(Rv4+Rv3)/2;
+      p.push('<text x="'+sxRQF+'" y="'+(qfmid-8)+'" text-anchor="middle" fill="'+fc1+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc1)+'</text>');
+      p.push('<text x="'+sxRQF+'" y="'+(qfmid+8)+'" text-anchor="middle" fill="'+fc2+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc2)+'</text>');
+    }
+    p.push('<line x1="'+Rv4+'" y1="'+qfmid+'" x2="'+Rv3+'" y2="'+qfmid+'" stroke="'+(winQFR?lineColor(winQFR,true):'#334155')+'" stroke-width="'+(winQFR?2.5:1.2)+'"/>');
+    if(qfmR&&qfmR.date&&qfmR.score1==null&&!isLive(qfmR)){
+      p.push('<text x="'+(Rv3+4)+'" y="'+qfmid+'" text-anchor="start" fill="#64748b" font-size="10.5" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">'+esc(String(qfmR.date))+'</text>');
+    }
+    if(isLive(qfmR)) liveBadge(Rv3+4, qfmid, 'start');
+  }
+
+  // ─── SF：マージバー(Lv4/Rv4)＋決勝へ出力 ────────────────────────
+  var qf0mid=(matchY(0)+matchY(1)+matchY(2)+matchY(3))/4;
+  var qf1mid=(matchY(4)+matchY(5)+matchY(6)+matchY(7))/4;
+  var sfLmid=(qf0mid+qf1mid)/2;
+
+  // 左SFバー
+  var winSFL=sfL&&sfL.winner!=null?(sfL.winner===1?sfL.team1:sfL.team2):null;
+  p.push('<line x1="'+Lv4+'" y1="'+qf0mid+'" x2="'+Lv4+'" y2="'+sfLmid+'" stroke="'+(sfL&&sfL.winner===1?lineColor(sfL.team1,true):'#475569')+'" stroke-width="'+(sfL&&sfL.winner===1?2.5:1.5)+'"/>');
+  p.push('<line x1="'+Lv4+'" y1="'+sfLmid+'" x2="'+Lv4+'" y2="'+qf1mid+'" stroke="'+(sfL&&sfL.winner===2?lineColor(sfL.team2,true):'#475569')+'" stroke-width="'+(sfL&&sfL.winner===2?2.5:1.5)+'"/>');
+  if(sfL&&sfL.score1!=null){
+    var sc1=String(sfL.score1),sc2=String(sfL.score2);
+    if(sfL.pk1!=null){sc1+='('+sfL.pk1+')';sc2+='('+sfL.pk2+')';}
+    var fc1=scoreColor(sfL,1),fc2=scoreColor(sfL,2);
+    var sxLSF=(Lv4+FC)/2;
+    p.push('<text x="'+sxLSF+'" y="'+(sfLmid-8)+'" text-anchor="middle" fill="'+fc1+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc1)+'</text>');
+    p.push('<text x="'+sxLSF+'" y="'+(sfLmid+8)+'" text-anchor="middle" fill="'+fc2+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc2)+'</text>');
+  }
+  p.push('<line x1="'+Lv4+'" y1="'+sfLmid+'" x2="'+FC+'" y2="'+sfLmid+'" stroke="'+(winSFL?lineColor(winSFL,true):'#334155')+'" stroke-width="'+(winSFL?2.5:1.2)+'"/>');
+  if(sfL&&sfL.date&&sfL.score1==null&&!isLive(sfL)){
+    p.push('<text x="'+(Lv4-4)+'" y="'+sfLmid+'" text-anchor="end" fill="#64748b" font-size="10.5" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">'+esc(String(sfL.date))+'</text>');
+  }
+  if(isLive(sfL)) liveBadge(Lv4-4, sfLmid, 'end');
+
+  // 右SFバー
+  var winSFR=sfR&&sfR.winner!=null?(sfR.winner===1?sfR.team1:sfR.team2):null;
+  p.push('<line x1="'+Rv4+'" y1="'+qf0mid+'" x2="'+Rv4+'" y2="'+sfLmid+'" stroke="'+(sfR&&sfR.winner===1?lineColor(sfR.team1,true):'#475569')+'" stroke-width="'+(sfR&&sfR.winner===1?2.5:1.5)+'"/>');
+  p.push('<line x1="'+Rv4+'" y1="'+sfLmid+'" x2="'+Rv4+'" y2="'+qf1mid+'" stroke="'+(sfR&&sfR.winner===2?lineColor(sfR.team2,true):'#475569')+'" stroke-width="'+(sfR&&sfR.winner===2?2.5:1.5)+'"/>');
+  if(sfR&&sfR.score1!=null){
+    var sc1=String(sfR.score1),sc2=String(sfR.score2);
+    if(sfR.pk1!=null){sc1+='('+sfR.pk1+')';sc2+='('+sfR.pk2+')';}
+    var fc1=scoreColor(sfR,1),fc2=scoreColor(sfR,2);
+    var sxRSF=(FC+Rv4)/2;
+    p.push('<text x="'+sxRSF+'" y="'+(sfLmid-8)+'" text-anchor="middle" fill="'+fc1+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc1)+'</text>');
+    p.push('<text x="'+sxRSF+'" y="'+(sfLmid+8)+'" text-anchor="middle" fill="'+fc2+'" font-size="10.5" font-weight="bold" dominant-baseline="middle">'+esc(sc2)+'</text>');
+  }
+  p.push('<line x1="'+Rv4+'" y1="'+sfLmid+'" x2="'+FC+'" y2="'+sfLmid+'" stroke="'+(winSFR?lineColor(winSFR,true):'#334155')+'" stroke-width="'+(winSFR?2.5:1.2)+'"/>');
+  if(sfR&&sfR.date&&sfR.score1==null&&!isLive(sfR)){
+    p.push('<text x="'+(Rv4+4)+'" y="'+sfLmid+'" text-anchor="start" fill="#64748b" font-size="10.5" font-weight="bold" font-family="-apple-system,sans-serif" dominant-baseline="middle">'+esc(String(sfR.date))+'</text>');
+  }
+  if(isLive(sfR)) liveBadge(Rv4+4, sfLmid, 'start');
+
+  // ─── 決勝（ボックスなし：トロフィーを線の上に浮かせる） ──────────
+  var finY=sfLmid;
+  p.push('<text x="'+FC+'" y="'+(finY-10)+'" text-anchor="middle" font-size="14">🏆</text>');
+  if(fin&&fin.score1!=null){
+    var sc1=String(fin.score1),sc2=String(fin.score2);
+    if(fin.pk1!=null){sc1+='('+fin.pk1+')';sc2+='('+fin.pk2+')';}
+    var fc1=fin.winner===1?'#fbbf24':'#94a3b8',fc2=fin.winner===2?'#fbbf24':'#94a3b8';
+    p.push('<text x="'+(FC-6)+'" y="'+(finY+18)+'" text-anchor="end" fill="'+fc1+'" font-size="15" font-weight="bold" font-family="-apple-system,sans-serif">'+esc(sc1)+'</text>');
+    p.push('<text x="'+(FC+6)+'" y="'+(finY+18)+'" text-anchor="start" fill="'+fc2+'" font-size="15" font-weight="bold" font-family="-apple-system,sans-serif">'+esc(sc2)+'</text>');
+  } else if(fin&&fin.date&&!isLive(fin)){
+    var fdParts=String(fin.date).split(/\s+/);
+    p.push('<text x="'+FC+'" y="'+(finY+14)+'" text-anchor="middle" fill="#64748b" font-size="6.5" font-family="-apple-system,sans-serif">'+esc(fdParts[0]||'')+'</text>');
+    if(fdParts[1]) p.push('<text x="'+FC+'" y="'+(finY+23)+'" text-anchor="middle" fill="#64748b" font-size="6.5" font-family="-apple-system,sans-serif">'+esc(fdParts[1])+'</text>');
+  }
+  if(isLive(fin)) liveBadge(FC, finY+32, 'middle');
+
+  // ─── 3位決定戦 ────────────────────────────────────────────────
+  var tY=YO+TH+30;
+  var tCY=tY+22;  // カード中心Y（ラベルと重ならないよう下にずらす）
+  p.push('<text x="'+(W/2)+'" y="'+(tY-8)+'" text-anchor="middle" fill="#64748b" font-size="10.5" font-weight="bold" font-family="-apple-system,sans-serif">3位決定戦</text>');
+  var t3CW=90,t3CH=30,tx1=W/2-t3CW-4,tx2=W/2+4;
+  function t3card(tx,team){
+    var n=team?team.name:'';
+    var isTBD=!n||n==='TBD';
+    var m2=(!isTBD&&team)?team.member:'';
+    var bc=m2?mc(m2):'#334155';
+    p.push('<rect x="'+tx+'" y="'+(tCY-t3CH/2)+'" width="'+t3CW+'" height="'+t3CH+'" rx="4" fill="#1e293b" stroke="'+bc+'" stroke-width="1"/>');
+    if(!isTBD){
+      var fx=flagUrl(n);
+      if(fx)p.push('<image href="'+fx+'" x="'+(tx+4)+'" y="'+(tCY-6)+'" width="15" height="11"/>');
+      var nfs=n.length<=6?8.5:n.length<=8?7:6.5;
+      var dn=n.length>9?n.slice(0,8)+'…':n;
+      p.push('<text x="'+(tx+22)+'" y="'+tCY+'" fill="#cbd5e1" font-size="'+nfs+'" font-weight="bold" dominant-baseline="middle" font-family="-apple-system,sans-serif">'+esc(dn)+'</text>');
+    } else {
+      p.push('<text x="'+(tx+t3CW/2)+'" y="'+tCY+'" text-anchor="middle" fill="#64748b" font-size="8" dominant-baseline="middle">未定</text>');
+    }
+  }
+  t3card(tx1,third?third.team1:null);
+  t3card(tx2,third?third.team2:null);
+  if(third&&third.score1!=null) p.push('<text x="'+(W/2)+'" y="'+(tCY+22)+'" text-anchor="middle" fill="#94a3b8" font-size="15" font-weight="bold" font-family="-apple-system,sans-serif">'+third.score1+' : '+third.score2+'</text>');
+  if(third&&third.date&&!isLive(third)) p.push('<text x="'+(W/2)+'" y="'+(tCY+40)+'" text-anchor="middle" fill="#64748b" font-size="10.5" font-weight="bold" font-family="-apple-system,sans-serif">'+esc(String(third.date))+'</text>');
+  if(isLive(third)) liveBadge(W/2, tCY+40, 'middle');
+
+  p.push('</svg>');
+  document.getElementById('bracket-wrap').innerHTML=p.join('');
+}
+</script>
+
+<script>
+// ────────────────────────────────────────────────
+// メンバービュー
+// ────────────────────────────────────────────────
+function renderMemberView(data) {
+  // チームの現在ラウンドと勝利数を計算
+  function getTeamRound(name) {
+    var alive = true;
+    var currentRound = 'R32';
+    var stars = 0;
+
+    var r32 = data.r32||[];
+    for(var i=0;i<r32.length;i++) {
+      var m=r32[i];
+      if((m.team1.name===name||m.team2.name===name)&&m.winner!=null) {
+        var iswinner = (m.team1.name===name&&m.winner===1)||(m.team2.name===name&&m.winner===2);
+        if(!iswinner){alive=false;break;}
+        stars=1; currentRound='R16';
+      }
+    }
+    if(!alive) return {alive:false,round:'R32',stars:0};
+
+    var r16 = data.r16||[];
+    for(var i=0;i<r16.length;i++) {
+      var m=r16[i];
+      if((m.team1.name===name||m.team2.name===name)&&m.winner!=null) {
+        var iswinner = (m.team1.name===name&&m.winner===1)||(m.team2.name===name&&m.winner===2);
+        if(!iswinner){alive=false;break;}
+        stars=2; currentRound='QF';
+      }
+    }
+    if(!alive) return {alive:false,round:'R16',stars:1};
+
+    var qf = data.qf||[];
+    for(var i=0;i<qf.length;i++) {
+      var m=qf[i];
+      if((m.team1.name===name||m.team2.name===name)&&m.winner!=null) {
+        var iswinner = (m.team1.name===name&&m.winner===1)||(m.team2.name===name&&m.winner===2);
+        if(!iswinner){alive=false;break;}
+        stars=3; currentRound='SF';
+      }
+    }
+    if(!alive) return {alive:false,round:'QF',stars:2};
+
+    var sf = data.sf||[];
+    for(var i=0;i<sf.length;i++) {
+      var m=sf[i];
+      if((m.team1.name===name||m.team2.name===name)&&m.winner!=null) {
+        var iswinner = (m.team1.name===name&&m.winner===1)||(m.team2.name===name&&m.winner===2);
+        if(!iswinner){alive=false;break;}
+        stars=4; currentRound='決勝';
+      }
+    }
+    if(!alive) return {alive:false,round:'SF',stars:3};
+
+    var fin = data.final;
+    if(fin&&(fin.team1.name===name||fin.team2.name===name)&&fin.winner!=null) {
+      var iswinner=(fin.team1.name===name&&fin.winner===1)||(fin.team2.name===name&&fin.winner===2);
+      if(iswinner){stars=5;currentRound='優勝';}
+      else{alive=false;}
+      return {alive:iswinner,round:currentRound,stars:stars};
+    }
+
+    return {alive:alive,round:currentRound,stars:stars};
+  }
+
+  // チームの勝敗を全ラウンド（3位決定戦含む）から集計
+  function getTeamRecord(name) {
+    var wins = 0, losses = 0;
+    function count(m) {
+      if(!m || !m.team1 || !m.team2 || m.winner==null) return;
+      if(m.team1.name!==name && m.team2.name!==name) return;
+      var iswinner = (m.team1.name===name&&m.winner===1)||(m.team2.name===name&&m.winner===2);
+      if(iswinner) wins++; else losses++;
+    }
+    (data.r32||[]).forEach(count);
+    (data.r16||[]).forEach(count);
+    (data.qf||[]).forEach(count);
+    (data.sf||[]).forEach(count);
+    count(data.third);
+    count(data.final);
+    return {wins:wins, losses:losses};
+  }
+
+  // 全チームのメンバー対応を抽出
+  var memberTeams = {};
+  MEMBERS.forEach(function(m){ memberTeams[m]=[]; });
+
+  var allTeams = [];
+  (data.r32||[]).forEach(function(m){
+    [m.team1,m.team2].forEach(function(t){ if(t&&t.name) allTeams.push(t); });
+  });
+  // 重複排除
+  var seen = {};
+  allTeams = allTeams.filter(function(t){ if(seen[t.name]) return false; seen[t.name]=true; return true; });
+
+  allTeams.forEach(function(t) {
+    var mb = t.member || 'キャリー';
+    if(!memberTeams[mb]) memberTeams[mb]=[];
+    memberTeams[mb].push(t);
+  });
+
+  // メンバーごとの成績を集計
+  var memberStats = MEMBERS.map(function(member) {
+    var teams = memberTeams[member]||[];
+    var total = teams.length;
+    var alive = 0;
+    var wins = 0, losses = 0;
+    var teamInfos = teams.map(function(t) {
+      var info = getTeamRound(t.name);
+      if(info.alive) alive++;
+      var rec = getTeamRecord(t.name);
+      wins += rec.wins; losses += rec.losses;
+      return {team:t, info:info};
+    });
+    var played = wins + losses;
+    return {
+      member: member, total: total, alive: alive,
+      wins: wins, losses: losses,
+      winRate: played>0 ? Math.round(wins/played*100) : null,
+      teamInfos: teamInfos
+    };
+  });
+
+  // 暫定ランキング：残チーム数 → 勝利数 → 勝率
+  memberStats.sort(function(a,b) {
+    if(b.alive!==a.alive) return b.alive-a.alive;
+    if(b.wins!==a.wins) return b.wins-a.wins;
+    return (b.winRate||0)-(a.winRate||0);
+  });
+
+  var html = '<div class="member-note">※現時点の暫定順位（残チーム数 → 勝利数 → 勝率）</div>';
+  var prevKey = null, prevRank = 0;
+  memberStats.forEach(function(s, idx) {
+    // 全指標が同じなら同順位
+    var key = s.alive+'-'+s.wins+'-'+(s.winRate===null?'':s.winRate);
+    var rank = (key===prevKey) ? prevRank : idx+1;
+    prevKey = key; prevRank = rank;
+
+    var member = s.member, total = s.total, alive = s.alive;
+    var wins = s.wins, losses = s.losses, winRate = s.winRate;
+    var teamInfos = s.teamInfos;
+    var pct = total>0 ? Math.round(alive/total*100) : 0;
+    var color = mc(member);
+
+    // バッジ
+    var badge = '';
+    if(alive===0 && total>0) badge = '<span class="member-badge" style="color:#64748b">全滅 💀</span>';
+    else if(alive===1) badge = '<span class="member-badge" style="color:'+color+'">LAST ONE 🔥</span>';
+    var hasFinalist = teamInfos.some(function(ti){ return ti.info.round==='決勝'||ti.info.round==='優勝'; });
+    if(hasFinalist) badge += ' <span class="member-badge" style="color:#f59e0b">🏆</span>';
+
+    html += '<div class="member-card" style="border-color:'+color+'33">';
+    html += '<div class="member-header">';
+    html += '<span class="member-rank'+(rank===1?' top':'')+'">'+rank+'位</span>';
+    html += '<span class="member-name" style="color:'+color+'">'+esc(member)+'</span>';
+    html += '<span class="member-record">'+wins+'勝'+losses+'敗';
+    if(winRate!=null) html += ' 勝率 <span class="member-winrate">'+winRate+'%</span>';
+    html += '</span>';
+    if(badge) html += badge;
+    html += '<span class="member-count" style="color:'+color+'"><span class="count-label">残チーム</span> '+alive+'/'+total+'</span>';
+    html += '</div>';
+    html += '<div class="member-bar-bg"><div class="member-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div>';
+    html += '<div class="team-chips">';
+    teamInfos.forEach(function(ti) {
+      var t = ti.team, info = ti.info;
+      var fl = flagUrl(t.name);
+      var stars = '⭐'.repeat(info.stars);
+      if(info.round==='優勝') stars+='🏆';
+      var cls = 'team-chip' + (info.alive?'':' eliminated');
+      html += '<div class="'+cls+'">';
+      if(fl) html += '<img src="'+fl+'" width="28" height="21" style="vertical-align:middle">';
+      html += '<span>'+esc(t.name)+'</span>';
+      html += '<span class="round-badge">'+esc(info.round)+'</span>';
+      if(stars) html += '<span class="stars">'+stars+'</span>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+
+  document.getElementById('member-list').innerHTML = html;
+}
+</script>
+
+<script>
+// ────────────────────────────────────────────────
+// ハイライトビュー
+// ────────────────────────────────────────────────
+function renderHighlightView(data) {
+  var allMatches = [];
+  var roundOrder = [
+    {key:'r32', label:'R32'},{key:'r16', label:'R16'},
+    {key:'qf', label:'QF'},{key:'sf', label:'SF'},
+    {key:'third', label:'3位決定戦'},{key:'final', label:'決勝'}
+  ];
+  roundOrder.forEach(function(r) {
+    var arr = r.key==='final'||r.key==='third' ? (data[r.key]?[data[r.key]]:[]) : (data[r.key]||[]);
+    arr.forEach(function(m, idx) {
+      if(!m||!m.team1||!m.team2) return;
+      allMatches.push({match:m, round:r.label, idx:idx});
+    });
+  });
+
+  function parseDateStr(s) {
+    if (!s) return 0;
+    var m = s.match(/^(\d+)\/(\d+)[^\s]+\s+(\d+):(\d+)/);
+    if (!m) return 0;
+    return parseInt(m[1])*1000000 + parseInt(m[2])*10000 + parseInt(m[3])*100 + parseInt(m[4]);
+  }
+  allMatches.sort(function(a, b) { return parseDateStr(a.match.date) - parseDateStr(b.match.date); });
+
+  var html = '';
+  allMatches.forEach(function(item, i) {
+    var m = item.match;
+    var key = item.round+'_'+i;
+    var isLive = m.status==='IN_PLAY'||m.status==='PAUSED';
+    var isFinished = m.status==='FINISHED';
+    var f1=flagUrl(m.team1.name)||'', f2=flagUrl(m.team2.name)||'';
+    html += '<div class="hl-card" id="hlcard-'+key+'">';
+    html += '<div class="hl-match-title">';
+    if(isLive) html += '<span class="live-badge">🔴 LIVE</span>';
+    if(!isFinished && !isLive) html += '<span class="round-badge" style="background:#1e293b;color:#64748b">⏳ 試合前</span>';
+    html += '<span class="round-badge" style="background:#334155;color:#94a3b8">'+esc(item.round)+'</span>';
+    var t1tbd = m.team1.name==='TBD'||!m.team1.name;
+    var t2tbd = m.team2.name==='TBD'||!m.team2.name;
+    html += '<span style="display:inline-flex;flex-direction:column;align-items:center;line-height:1.5">';
+    html += '<span>';
+    if(!t1tbd && f1) html += '<img src="'+f1+'" width="28" height="21" style="margin-right:4px;vertical-align:middle">';
+    html += esc(t1tbd ? '未定' : (m.team1.name.length>6?m.team1.name.slice(0,6)+'…':m.team1.name))+'</span>';
+    if(!t1tbd) html += '<span style="color:'+mc(m.team1.member)+'">'+esc(m.team1.member)+'</span>';
+    html += '</span>';
+    html += '<span style="margin:0 6px"> vs </span>';
+    html += '<span style="display:inline-flex;flex-direction:column;align-items:center;line-height:1.5">';
+    html += '<span>';
+    if(!t2tbd && f2) html += '<img src="'+f2+'" width="28" height="21" style="margin-right:4px;vertical-align:middle">';
+    html += esc(t2tbd ? '未定' : (m.team2.name.length>6?m.team2.name.slice(0,6)+'…':m.team2.name))+'</span>';
+    if(!t2tbd) html += '<span style="color:'+mc(m.team2.member)+'">'+esc(m.team2.member)+'</span>';
+    html += '</span>';
+    html += '</div>';
+    if(m.date) html += '<div class="hl-date">📅 '+esc(m.date)+'</div>';
+
+    html += '<div class="hl-btns">';
+    if(isFinished) {
+      html += '<button class="hl-btn hl-btn-watch" onclick="watchHighlight(\''+key+'\',\''+esc(m.team1.name)+'\',\''+esc(m.team2.name)+'\',this)">🎬 ハイライトを見る</button>';
+    } else {
+      html += '<button class="hl-btn" disabled style="opacity:0.35;cursor:not-allowed">🎬 ハイライトを見る</button>';
+    }
+    html += '</div>';
+    html += '</div>';
+  });
+
+  document.getElementById('highlight-list').innerHTML = html || '<p style="text-align:center;color:#64748b;padding:40px">試合データがありません</p>';
+}
+
+function watchHighlight(key, team1, team2, btn) {
+  var orig = btn.textContent;
+  btn.textContent = '🔍 検索中…';
+  btn.disabled = true;
+  apiCall('highlight', { key: key, team1: team1, team2: team2 },
+    function(r) {
+      if(r.ok) {
+        // ボタンを <a> リンクに置き換え（iOS Safari対策：ユーザー操作で直接開けるように）
+        var a = document.createElement('a');
+        a.href = r.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.className = btn.className;
+        a.style.cssText = 'display:block;text-align:center;text-decoration:none';
+        a.textContent = '🎬 タップして開く';
+        btn.parentNode.replaceChild(a, btn);
+        a.click();
+      } else {
+        btn.textContent = orig;
+        btn.disabled = false;
+        alert('動画が見つかりませんでした\n'+r.error);
+      }
+    },
+    function(e) {
+      btn.textContent = orig;
+      btn.disabled = false;
+      alert('エラー: '+(e.message||e));
+    });
+}
+
+</script>
+
+<script>
+// ────────────────────────────────────────────────
+// チームポップアップ
+// ────────────────────────────────────────────────
+function showTeamPopup(name) {
+  if(!name||!gData) return;
+  var team = null;
+  var allM = (gData.r32||[]).concat(gData.r16||[]).concat(gData.qf||[]).concat(gData.sf||[]);
+  if(gData.final) allM.push(gData.final);
+  for(var i=0;i<allM.length;i++) {
+    var m=allM[i];
+    if(m.team1&&m.team1.name===name){team=m.team1;break;}
+    if(m.team2&&m.team2.name===name){team=m.team2;break;}
+  }
+  if(!team) return;
+
+  var color = team.member ? mc(team.member) : '#64748b';
+  var fl = flagUrl(name);
+  var wins = 0;
+  var matchHistory = [];
+  var nextMatch = null;
+
+  var roundKeys = [{key:'r32',label:'R32'},{key:'r16',label:'R16'},{key:'qf',label:'QF'},{key:'sf',label:'SF'},{key:'final',label:'決勝'}];
+  roundKeys.forEach(function(r) {
+    var arr = r.key==='final'?(gData.final?[gData.final]:[]):(gData[r.key]||[]);
+    arr.forEach(function(m) {
+      if(!m) return;
+      var isHome = m.team1&&m.team1.name===name;
+      var isAway = m.team2&&m.team2.name===name;
+      if(!isHome&&!isAway) return;
+      var opp = isHome?m.team2:m.team1;
+      if(m.winner==null) {
+        nextMatch = {round:r.label, opponent:opp, date:m.date};
+      } else {
+        var iWon = (isHome&&m.winner===1)||(isAway&&m.winner===2);
+        if(iWon) wins++;
+        var mySc = isHome?m.score1:m.score2;
+        var opSc = isHome?m.score2:m.score1;
+        matchHistory.push({round:r.label, opp:opp, mySc:mySc, opSc:opSc, won:iWon});
+      }
+    });
+  });
+
+  var html = '<div class="popup-team-header">';
+  if(fl) html += '<img src="'+fl+'" width="32" height="24">';
+  html += '<div>';
+  html += '<div class="popup-nation">'+esc(name)+'</div>';
+  if(team.member) html += '<div class="popup-member" style="color:'+color+'">'+esc(team.member)+'の担当</div>';
+  html += '</div>';
+  html += '<div style="margin-left:auto;font-size:20px;color:#f59e0b">'+'⭐'.repeat(wins)+'</div>';
+  html += '</div>';
+
+  if(matchHistory.length) {
+    html += '<div class="popup-section">';
+    html += '<div class="popup-label">試合結果</div>';
+    matchHistory.forEach(function(h) {
+      var ofl = flagUrl(h.opp&&h.opp.name);
+      html += '<div class="popup-match-row">';
+      html += '<span class="round-badge">'+esc(h.round)+'</span>';
+      if(ofl) html += '<img src="'+ofl+'" width="16" height="12">';
+      html += '<span>'+esc(h.opp?h.opp.name:'')+'</span>';
+      html += '<span style="margin-left:auto;font-weight:bold;color:'+(h.won?'#86efac':'#f87171')+'">'+h.mySc+' - '+h.opSc+(h.won?' ✓':'')+'</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  if(nextMatch) {
+    html += '<div class="popup-section">';
+    html += '<div class="popup-label">次の試合</div>';
+    var ofl = flagUrl(nextMatch.opponent&&nextMatch.opponent.name);
+    html += '<div class="popup-match-row">';
+    html += '<span class="round-badge">'+esc(nextMatch.round)+'</span>';
+    if(ofl) html += '<img src="'+ofl+'" width="16" height="12">';
+    html += '<span>'+esc(nextMatch.opponent?nextMatch.opponent.name:'')+'</span>';
+    if(nextMatch.date) html += '<span style="margin-left:auto;color:#64748b;font-size:11px">'+esc(nextMatch.date)+'</span>';
+    html += '</div>';
+    html += '</div>';
+  }
+
+  document.getElementById('popup-content').innerHTML = html;
+  document.getElementById('popup-overlay').classList.add('open');
+}
+
+function closePopup() {
+  document.getElementById('popup-overlay').classList.remove('open');
+}
+</script>
+
+<script>
+// ────────────────────────────────────────────────
+// 個人成績ビュー
+// ────────────────────────────────────────────────
+var scorersData = null;
+var scorersMode = 'goals';
+
+function initScorersTab() {
+  if (scorersData) { renderScorers(); return; }
+  // 前回データがあれば即表示 → 裏で最新を取得して差し替え
+  var cached = loadCache('scorers');
+  if (cached) { scorersData = cached.d; renderScorers(); }
+  else document.getElementById('scorers-list').innerHTML = '<p style="text-align:center;color:#64748b;padding:40px">⏳ 読み込み中…</p>';
+  apiCall('scorers', null,
+    function(r) {
+      if (r.ok) { scorersData = r; saveCache('scorers', r); renderScorers(); }
+      else if (!cached) { document.getElementById('scorers-list').innerHTML = '<p style="text-align:center;color:#ef4444;padding:20px">❌ ' + esc(r.error) + '</p>'; }
+    },
+    function(e) {
+      if (!cached) { document.getElementById('scorers-list').innerHTML = '<p style="text-align:center;color:#ef4444;padding:20px">❌ ' + esc(e.message||e) + '</p>'; }
+    });
+}
+
+function refreshScorers() {
+  scorersData = null;
+  initScorersTab();
+}
+
+function setScorersMode(mode, btn) {
+  scorersMode = mode;
+  document.querySelectorAll('.scorers-toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderScorers();
+}
+
+function renderScorers() {
+  var list = scorersMode === 'goals' ? scorersData.goals : scorersData.assists;
+  var medals = ['🥇','🥈','🥉'];
+  var html = '';
+  list.forEach(function(p, i) {
+    var rank  = i < 3 ? medals[i] : (i+1)+'位';
+    var color = mc(p.member);
+    var count = scorersMode === 'goals' ? p.goals : p.assists;
+    html += '<div class="scorer-row" style="background:'+color+'18;border-left:3px solid '+color+'">';
+    html += '<span class="scorer-rank">'+rank+'</span>';
+    html += '<span class="scorer-info">';
+    html += '<span class="scorer-name">'+esc(p.name)+'</span>';
+    var fl = flagUrl(p.teamJa);
+    html += '<span class="scorer-team">';
+    if(fl) html += '<img src="'+fl+'" width="20" height="15" style="vertical-align:middle;margin-right:3px">';
+    html += esc(p.teamJa)+' <span style="color:'+color+';font-weight:bold">（'+esc(p.member)+'）</span></span>';
+    html += '</span>';
+    html += '<span class="scorer-count" style="color:'+color+'">'+count+'</span>';
+    html += '</div>';
+  });
+  document.getElementById('scorers-list').innerHTML = html || '<p style="text-align:center;color:#64748b;padding:40px">データがありません</p>';
+}
+</script>
+
+<script>
+// ────────────────────────────────────────────────
+// タブ切り替え
+// ────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  document.getElementById('focus-row').style.display = (name==='bracket') ? 'flex' : 'none';
+  if(name==='scorers') initScorersTab();
+}
+
+// ────────────────────────────────────────────────
+// フォーカスフィルター
+// ────────────────────────────────────────────────
+function setFocus(member) {
+  focusMember = member;
+  document.querySelectorAll('#focus-row button').forEach(function(b){
+    b.classList.remove('active');
+    b.style.background = '';
+  });
+  if(member) {
+    var btn = document.getElementById('fbtn-'+member);
+    if(btn){ btn.classList.add('active'); btn.style.background = mc(member); }
+  } else {
+    document.getElementById('btn-all').classList.add('active');
+  }
+  if(gData) renderBracket(gData);
+}
+
+// ────────────────────────────────────────────────
+// フォーカスボタン初期化
+// ────────────────────────────────────────────────
+function initFocusButtons() {
+  var row = document.getElementById('focus-row');
+  row.style.display='flex';
+  // 先頭：全員ボタン
+  var allBtn = document.createElement('button');
+  allBtn.id = 'btn-all';
+  allBtn.textContent = '全員';
+  allBtn.classList.add('active');
+  allBtn.onclick = function(){ setFocus(null); };
+  row.appendChild(allBtn);
+  // 続けてメンバーボタン
+  MEMBERS.forEach(function(member) {
+    var btn = document.createElement('button');
+    btn.id = 'fbtn-'+member;
+    btn.textContent = member;
+    btn.style.borderColor = mc(member);
+    btn.style.color = mc(member);
+    btn.onclick = function(){ setFocus(focusMember===member?null:member); };
+    row.appendChild(btn);
+  });
+}
+
+// ────────────────────────────────────────────────
+// 新着バッジ（localStorage比較）
+// ────────────────────────────────────────────────
+function checkNewResults(data) {
+  var allMatches = [];
+  var rounds = ['r32','r16','qf','sf'];
+  rounds.forEach(function(r){ (data[r]||[]).forEach(function(m){if(m)allMatches.push(m);}); });
+  if(data.final) allMatches.push(data.final);
+
+  var newCount = 0;
+  allMatches.forEach(function(m,i) {
+    if(m.winner==null) return;
+    var key = 'match_'+i;
+    if(!lastSeen[key]) newCount++;
+  });
+  if(newCount>0) {
+    var badge = document.getElementById('new-badge');
+    badge.textContent = '🔴 '+newCount+'試合更新';
+    badge.style.display = 'block';
+    badge.onclick = function(){
+      allMatches.forEach(function(m,i){ if(m.winner!=null) lastSeen['match_'+i]=true; });
+      localStorage.setItem('wc_lastSeen',JSON.stringify(lastSeen));
+      badge.style.display='none';
+    };
+  }
+}
+
+// ────────────────────────────────────────────────
+// 紙吹雪（優勝確定時）
+// ────────────────────────────────────────────────
+function launchConfetti() {
+  var c = document.getElementById('confetti');
+  c.style.display='block';
+  var colors=['#f59e0b','#ef4444','#3b82f6','#22c55e','#a855f7','#f97316','#ffffff'];
+  for(var i=0;i<80;i++) {
+    var el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText='left:'+Math.random()*100+'%;top:-20px;background:'+colors[Math.floor(Math.random()*colors.length)]+';animation-duration:'+(2+Math.random()*3)+'s;animation-delay:'+Math.random()*2+'s;transform:rotate('+Math.random()*360+'deg)';
+    c.appendChild(el);
+  }
+  setTimeout(function(){c.style.display='none';c.innerHTML='';},6000);
+}
+
+// ────────────────────────────────────────────────
+// データ反映
+// ────────────────────────────────────────────────
+function applyData(data) {
+  gData = data;
+  document.getElementById('loading').style.display='none';
+  document.querySelectorAll('.refresh-controls').forEach(function(el){ el.style.display='flex'; });
+  renderBracket(data);
+  renderMemberView(data);
+  renderHighlightView(data);
+  if(data.final && data.final.winner!=null) launchConfetti();
+}
+
+function doRefresh() {
+  var btns = document.querySelectorAll('.refresh-btn');
+  btns.forEach(function(b){ b.textContent='⏳ 更新中…'; b.disabled=true; });
+  function reset() { btns.forEach(function(b){ b.textContent='🔄 更新'; b.disabled=false; }); }
+  apiCall('refresh', null,
+    function(d){ reset(); saveCache('info', d); setDataStatus(''); applyData(d); },
+    function(e){ reset(); alert('更新失敗: '+(e.message||e)); });
+}
+
+// ────────────────────────────────────────────────
+// 起動
+// ────────────────────────────────────────────────
+initFocusButtons();
+document.getElementById('focus-row').style.display='none';
+
+// 前回データがあれば即表示 → 裏で最新を取得して差し替え
+(function boot(){
+  var cached = loadCache('info');
+  if (cached) {
+    applyData(cached.d);
+    setDataStatus('前回データ表示中（' + fmtCacheTime(cached.t) + '）　最新を取得中…');
+  }
+  apiCall('info', null,
+    function(d){
+      saveCache('info', d);
+      setDataStatus('');
+      applyData(d);
+    },
+    function(e){
+      if (cached) {
+        setDataStatus('オフライン　最終更新 ' + fmtCacheTime(cached.t));
+      } else {
+        document.getElementById('loading').textContent = '❌ ' + (e.message||e);
+      }
+    });
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
