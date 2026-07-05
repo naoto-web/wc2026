@@ -274,7 +274,7 @@ var lastSeen = JSON.parse(localStorage.getItem('wc_lastSeen') || '{}');
 // ────────────────────────────────────────────────
 function flagUrl(name) {
   var c = CC[name];
-  return c ? 'https://flagcdn.com/20x15/'+c+'.png' : null;
+  return c ? 'https://flagcdn.com/160x120/'+c+'.png' : null;
 }
 function mc(member) { return MEMBER_COLORS[member] || '#64748b'; }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
